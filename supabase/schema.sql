@@ -447,6 +447,8 @@ revoke all on function public.hatsu_can_view_photo(text), public.hatsu_can_uploa
   public.admin_set_status(uuid, text), public.admin_suspend(uuid, boolean)
   from public, anon, authenticated;
 
+-- 「Automatically expose new tables」をオフにして作ったプロジェクトでも動くよう、使う分だけ明示的に渡す。
+grant usage on schema public to anon, authenticated;
 grant execute on function public.ping() to anon, authenticated;
 grant execute on function public.hatsu_can_view_photo(text), public.hatsu_can_upload(text), public.hatsu_can_remove(text),
   public.me(), public.update_profile(text, text, text), public.timeline(boolean, text, bigint),
