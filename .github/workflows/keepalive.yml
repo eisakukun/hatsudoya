@@ -15,10 +15,15 @@ jobs:
         with:
           fetch-depth: 1
       - name: Supabase をのぞく
+        # 接続先は GitHub の Secrets（SUPABASE_URL / SUPABASE_KEY）を先に見て、無ければ config.js を見る。
+        # どちらも空なら失敗にする（黙って成功すると、のぞいていないのに気づけない）。
+        env:
+          SECRET_URL: ${{ secrets.SUPABASE_URL }}
+          SECRET_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          URL=$(sed -n 's/^ *url: *"\([^"]*\)".*/\1/p' config.js)
-          KEY=$(sed -n 's/^ *key: *"\([^"]*\)".*/\1/p' config.js)
-          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "config.js が未設定なので、のぞかずに終わります"; exit 0; fi
+          URL=${SECRET_URL:-$(sed -n 's/^ *url: *"\([^"]*\)".*/\1/p' config.js)}
+          KEY=${SECRET_KEY:-$(sed -n 's/^ *key: *"\([^"]*\)".*/\1/p' config.js)}
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "::error::接続先が未設定です（Secrets の SUPABASE_URL / SUPABASE_KEY か config.js）。このままだと Supabase が止まります"; exit 1; fi
           for i in 1 2 3; do
             if curl -fsS -X POST "$URL/rest/v1/rpc/ping" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{}'; then echo; exit 0; fi
             sleep 20
